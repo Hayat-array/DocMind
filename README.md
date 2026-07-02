@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+HEAD
 # DocMind
 
 DocMind is a Flask-based Retrieval-Augmented Generation (RAG) app that lets you upload a PDF and ask questions about its contents.
@@ -59,4 +59,4 @@ py -3 app.py
 - If the answer is not in the document, it will say so instead of guessing.
 =======
 # DocMind
->>>>>>> 1141e45b8819acf051758aa84be3d193e3c6d64c
+
