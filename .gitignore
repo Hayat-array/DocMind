@@ -1,0 +1,16 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# FAISS database
+database/faiss_index
+database/faiss_index_texts.pkl
+
+# VS Code
+.vscode/

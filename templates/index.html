@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocMind — Document Question Answering</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="alternate icon" href="{{ url_for('static', filename='favicon.svg') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="bg-decor">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+</div>
+
+<div class="wrap">
+
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+        <i class="fa-solid fa-moon" id="theme-icon"></i>
+    </button>
+
+    <header class="hero hero-compact">
+        <div class="hero-copy">
+            <div class="hero-badge"><i class="fa-solid fa-bolt"></i> Fast grounded answers</div>
+            <h1>Doc<span>Mind</span></h1>
+            <p>Upload one PDF, ask one question, and get a direct answer with the best matching context kept out of the way unless you need it.</p>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-card">
+                <span class="stat-value">1</span>
+                <span class="stat-label">document at a time</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">Top 5</span>
+                <span class="stat-label">retrieved chunks</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">Low</span>
+                <span class="stat-label">prompt noise</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <aside class="panel sidebar-panel">
+            <section class="card" id="upload-card">
+                <div class="card-head">
+                    <div class="card-icon icon-blue"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div>
+                        <h2>Upload Document</h2>
+                        <p class="card-sub">PDF only</p>
+                    </div>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" id="upload-form">
+                    <label class="dropzone" id="dropzone" for="pdf-input">
+                        <input type="file" id="pdf-input" name="pdf" accept=".pdf" hidden>
+                        <i class="fa-solid fa-file-arrow-up dz-icon"></i>
+                        <span class="dz-title" id="dz-title">Drag and drop your PDF</span>
+                        <span class="dz-sub" id="dz-sub">or click to browse</span>
+                    </label>
+
+                    <button class="btn btn-primary" type="submit" id="upload-btn">
+                        <i class="fa-solid fa-upload"></i>
+                        <span>Upload</span>
+                    </button>
+                </form>
+
+                {% if upload_message %}
+                <div class="alert alert-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>{{ upload_message }}</span>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="card tips-card">
+                <div class="card-head">
+                    <div class="card-icon icon-gray"><i class="fa-solid fa-circle-info"></i></div>
+                    <div>
+                        <h2>Better Questions</h2>
+                        <p class="card-sub">Ask for facts, summaries, or sections</p>
+                    </div>
+                </div>
+
+                <ul class="tip-list">
+                    <li>What are the main findings?</li>
+                    <li>Summarize section 2 in 3 bullets.</li>
+                    <li>What does the document say about X?</li>
+                </ul>
+            </section>
+        </aside>
+
+        <section class="card chat-panel" id="ask-card">
+            <div class="card-head chat-head">
+                <div>
+                    <h2>Chat</h2>
+                    <p class="card-sub">Ask a question about the uploaded document</p>
+                </div>
+                {% if context %}
+                <span class="context-pill">{{ context|length }} chunks used</span>
+                {% endif %}
+            </div>
+
+            <div class="chat-thread">
+                <div class="chat-message user-message">
+                    <div class="chat-avatar user-avatar">You</div>
+                    <div class="chat-bubble">
+                        {% if question %}
+                            {{ question }}
+                        {% else %}
+                            Ask something specific about the document to get a grounded answer.
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar assistant-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="chat-bubble assistant-bubble">
+                        {% if answer %}
+                            {{ answer }}
+                        {% else %}
+                            Your answer will appear here after you ask a question.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" id="ask-form" class="composer">
+                <label class="composer-label" for="question-input">Your question</label>
+                <textarea
+                    class="question-input"
+                    id="question-input"
+                    name="question"
+                    rows="3"
+                    placeholder="e.g. What are the key findings in section 3?"
+                    required
+                >{{ question }}</textarea>
+
+                <div class="composer-actions">
+                    <p class="composer-hint">Press Enter to send, Shift+Enter for a new line.</p>
+                    <button class="btn btn-success" type="submit" id="ask-btn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Send</span>
+                    </button>
+                </div>
+            </form>
+
+            {% if context %}
+            <details class="context-details">
+                <summary>
+                    <span><i class="fa-solid fa-layer-group"></i> Retrieved context</span>
+                    <span class="context-count">{{ context|length }}</span>
+                </summary>
+                <div class="chunk-list">
+                    {% for chunk in context %}
+                    <div class="chunk">
+                        <div class="chunk-head">
+                            <span class="chunk-badge">Chunk {{ loop.index }}</span>
+                        </div>
+                        <p class="chunk-text">{{ chunk }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+            {% endif %}
+        </section>
+    </main>
+
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
